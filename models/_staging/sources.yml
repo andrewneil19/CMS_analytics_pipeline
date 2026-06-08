@@ -7,7 +7,7 @@ sources:
       - name: provider_service
         description: Provider + service identifies a row
         columns:
-          - name: provider_NPI
+          - name: provider_npi
             description: National Provider Identifier - 1 of 3 table key fields
             tests:
               - not_null 
@@ -57,12 +57,21 @@ sources:
           - name: avg_medicare_allowed_amt
           - name: avg_medicare_pymt_amt
           - name: avg_medicare_stdzd_amt
-
+        
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - provider_npi
+                - hcpcs_code
+                - place_of_service
 
       - name: provider_drug
-        description: Provider + drug identifies a row
+        description: Provider + drug brand name + generic name identifies a row
         columns:
-          - name: provider_NPI
+          - name: provider_npi
+            description: National Provider Identifier - 1 of 3 table key fields
+            tests:
+              - not_null
           - name: provider_last_or_org_name
           - name: provider_first_name
           - name: provider_city
@@ -70,8 +79,18 @@ sources:
           - name: provider_state_FIPS_code
           - name: provider_specialty_code
           - name: provider_specialty_src
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['NPPES-Specialty', 'NPPES-Taxonomy', 'Claim-Specialty'] 
           - name: drug_brand_name
+            description: Brand name of drug - 2 of 3 table key fields
+            tests:
+              - not_null
           - name: drug_generic_name
+            description: Generic name of drug - 3 of 3 table key fields
+            tests:
+              - not_null
           - name: total_claims
           - name: total_30d_fills
           - name: total_day_supply
@@ -84,3 +103,10 @@ sources:
           - name: total_GE65_day_supply
           - name: total_GE65_bene_suppression_flag
           - name: total_GE65_bene
+        
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - provider_npi
+                - drug_generic_name
+                - drug_brand_name
