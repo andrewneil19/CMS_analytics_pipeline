@@ -1,0 +1,112 @@
+sources:
+  - name: cms_raw
+    database: cms
+    schema: raw
+    description: Raw Medicare provider, service, drug data from CMS
+    tables:
+      - name: provider_service
+        description: Provider + service identifies a row
+        columns:
+          - name: provider_npi
+            description: National Provider Identifier - 1 of 3 table key fields
+            tests:
+              - not_null 
+          - name: provider_last_or_org_name
+          - name: provider_first_name
+          - name: provider_middle_initial
+          - name: provider_credentials
+          - name: provider_entity_code
+            description: If provider individual - I, else organization - O
+            tests:
+              - accepted_values:
+                  arguments: 
+                    values: ["I", "O"]
+          - name: provider_street_add_1
+          - name: provider_street_add_2
+          - name: provider_city
+          - name: provider_state
+          - name: provider_state_FIPS_code
+          - name: provider_zip
+          - name: provider_RUCA
+          - name: provider_RUCA_desc
+          - name: provider_country
+          - name: provider_specialty_code
+          - name: provider_medicare_indicator
+            description: Provider Medicare participation - "Y" or "N"
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ["Y", "N"]
+          - name: HCPCS_code
+            description: Identifies medical service provided. 2/3 table key fields
+            tests:
+              - not_null
+          - name: HCPCS_code_desc
+          - name: HCPCS_drug_indicator
+          - name: place_of_service
+            description: Identifies place of service, either facility ('F') or non-facility ('O'). 3/3 table key fields
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ["F", "O"]
+          - name: total_beneficiaries
+          - name: total_services
+          - name: total_benef_day_services
+          - name: avg_submitted_charge
+          - name: avg_medicare_allowed_amt
+          - name: avg_medicare_pymt_amt
+          - name: avg_medicare_stdzd_amt
+        
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - provider_npi
+                - hcpcs_code
+                - place_of_service
+
+      - name: provider_drug
+        description: Provider + drug brand name + generic name identifies a row
+        columns:
+          - name: provider_npi
+            description: National Provider Identifier - 1 of 3 table key fields
+            tests:
+              - not_null
+          - name: provider_last_or_org_name
+          - name: provider_first_name
+          - name: provider_city
+          - name: provider_state
+          - name: provider_state_FIPS_code
+          - name: provider_specialty_code
+          - name: provider_specialty_src
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['NPPES-Specialty', 'NPPES-Taxonomy', 'Claim-Specialty'] 
+          - name: drug_brand_name
+            description: Brand name of drug - 2 of 3 table key fields
+            tests:
+              - not_null
+          - name: drug_generic_name
+            description: Generic name of drug - 3 of 3 table key fields
+            tests:
+              - not_null
+          - name: total_claims
+          - name: total_30d_fills
+          - name: total_day_supply
+          - name: total_drug_cost
+          - name: total_bene
+          - name: GE65_suppression_flag
+          - name: total_GE65_claims
+          - name: total_GE65_30d_fills
+          - name: total_GE65_drug_cost
+          - name: total_GE65_day_supply
+          - name: total_GE65_bene_suppression_flag
+          - name: total_GE65_bene
+        
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - provider_npi
+                - drug_generic_name
+                - drug_brand_name
