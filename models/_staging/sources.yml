@@ -5,7 +5,7 @@ sources:
     description: Raw Medicare provider, service, drug data from CMS
     tables:
       - name: provider_service
-        description: Provider + service identifies a row
+        description: Provider + HCPCS code + place of service identifies a row
         columns:
           - name: provider_npi
             description: National Provider Identifier - 1 of 3 table key fields
@@ -37,7 +37,7 @@ sources:
               - accepted_values:
                   arguments:
                     values: ["Y", "N"]
-          - name: HCPCS_code
+          - name: hcpcs_code
             description: Identifies medical service provided. 2/3 table key fields
             tests:
               - not_null
