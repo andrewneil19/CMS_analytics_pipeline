@@ -1,0 +1,109 @@
+models:
+  - name: stg_provider_service
+    description: Grain is Provider + service + place of service
+    columns:
+      - name: provider_npi
+        description: National Provider Identifier - 1 of 3 table key fields
+        tests:
+          - not_null 
+      - name: provider_last_or_org_name
+      - name: provider_first_name
+      - name: provider_middle_initial
+      - name: provider_credentials
+      - name: provider_entity_code
+        description: If provider individual - I, else organization - O
+        tests:
+        - accepted_values:
+            arguments: 
+              values: ["I", "O"]
+      - name: provider_street_add_1
+      - name: provider_street_add_2
+      - name: provider_city
+      - name: provider_state
+      - name: provider_state_fips_code
+      - name: provider_zip
+      - name: provider_ruca
+      - name: provider_ruca_desc
+      - name: provider_country
+      - name: provider_specialty_code
+      - name: provider_medicare_indicator
+        description: Provider Medicare participation - "Y" or "N"
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["Y", "N"]
+      - name: hcpcs_code
+        description: Identifies medical service provided. 2/3 table key fields
+        tests:
+          - not_null
+      - name: hcpcs_code_desc
+      - name: hcpcs_drug_indicator
+      - name: place_of_service
+        description: Identifies place of service, either facility ('F') or non-facility ('O'). 3/3 table key fields
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["F", "O"]
+      - name: total_beneficiaries
+      - name: total_services
+      - name: total_beneficiaries_per_day_services
+      - name: avg_submitted_charge
+      - name: avg_medicare_allowed_amount
+      - name: avg_medicare_payment_amount
+      - name: avg_medicare_standardized_amount
+        
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments: 
+            combination_of_columns:
+              - provider_npi
+              - hcpcs_code
+              - place_of_service 
+
+  - name: stg_provider_drug
+    description: Grain is Provider + drug brand name + generic name
+    columns:
+      - name: provider_npi
+        description: National Provider Identifier - 1 of 3 table key fields
+        tests:
+          - not_null
+      - name: provider_last_or_org_name
+      - name: provider_first_name
+      - name: provider_city
+      - name: provider_state
+      - name: provider_state_fips_code
+      - name: provider_specialty_code
+      - name: provider_specialty_code_source
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['NPPES-Specialty', 'NPPES-Taxonomy', 'Claim-Specialty'] 
+      - name: drug_brand_name
+        description: Brand name of drug - 2 of 3 table key fields
+        tests:
+          - not_null
+      - name: drug_generic_name
+        description: Generic name of drug - 3 of 3 table key fields
+        tests:
+          - not_null
+      - name: total_claims
+      - name: total_30_day_fills
+      - name: total_day_supply
+      - name: total_drug_cost
+      - name: total_beneficiaries
+      - name: total_age_65_plus_suppression_flag
+      - name: total_age_65_plus_claims
+      - name: total_age_65_plus_30_day_fills
+      - name: total_age_65_plus_drug_cost
+      - name: total_age_65_plus_day_supply
+      - name: total_age_65_plus_beneficiary_suppression_flag
+      - name: total_age_65_plus_beneficiaries
+        
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - provider_npi
+              - drug_generic_name
+              - drug_brand_name

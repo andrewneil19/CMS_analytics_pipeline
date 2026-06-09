@@ -5,7 +5,7 @@ sources:
     description: Raw Medicare provider, service, drug data from CMS
     tables:
       - name: provider_service
-        description: Provider + service identifies a row
+        description: Provider + service + place of service identifies a row
         columns:
           - name: provider_npi
             description: National Provider Identifier - 1 of 3 table key fields
@@ -60,10 +60,11 @@ sources:
         
         tests:
           - dbt_utils.unique_combination_of_columns:
-              combination_of_columns:
-                - provider_npi
-                - hcpcs_code
-                - place_of_service
+              arguments: 
+                combination_of_columns:
+                  - provider_npi
+                  - hcpcs_code
+                  - place_of_service
 
       - name: provider_drug
         description: Provider + drug brand name + generic name identifies a row
@@ -106,7 +107,8 @@ sources:
         
         tests:
           - dbt_utils.unique_combination_of_columns:
-              combination_of_columns:
-                - provider_npi
-                - drug_generic_name
-                - drug_brand_name
+              arguments:
+                combination_of_columns:
+                  - provider_npi
+                  - drug_generic_name
+                  - drug_brand_name
