@@ -1,0 +1,14 @@
+exposures:
+  - name: power_bi_semantic_model
+    type: dashboard
+    label: "Power BI Semantic Model"
+    description: Exposure to Power BI
+    depends_on:
+      - ref('dim_provider')
+      - ref('dim_state_country')
+      - ref('dim_service')
+      - ref('dim_drug')
+      - ref('fct_services_rendered')
+      - ref('fct_drugs_prescribed')
+    owner:
+      name: TODO
