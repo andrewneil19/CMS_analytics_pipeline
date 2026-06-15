@@ -1,0 +1,183 @@
+version: 2
+
+models:
+  - name: dim_drug
+    description: One record per drug brand and generic name combination
+    columns:
+      - name: drug_id
+        description: Surrogate key for unique drug
+        data_tests:
+          - unique
+          - not_null
+      - name: drug_brand_name
+        description: Brand name of the drug
+        data_tests:
+          - not_null
+      - name: drug_generic_name
+        description: Generic name of the drug
+        data_tests:
+          - not_null
+    
+  - name: dim_service
+    description: One record per HCPCS service code
+    columns:
+      - name: hcpcs_code
+        description: HCPCS code identifying the medical service
+        data_tests:
+          - not_null
+          - unique
+      - name: hcpcs_code_description
+        description: Description of the HCPCS service code
+      - name: hcpcs_drug_indicator
+        description: Indicates whether the HCPCS code is drug-related
+
+  - name: dim_provider
+    description: One record per provider NPI with provider attributes used across marts
+    columns:
+      - name: provider_npi
+        description: National Provider Identifier and primary key for the provider dimension
+        data_tests:
+          - not_null
+          - unique
+      - name: provider_last_or_org_name
+        description: Provider last name if an individual, otherwise organization name
+      - name: provider_first_name
+        description: Provider first name when the provider is an individual
+      - name: provider_credentials
+        description: Provider credentials
+      - name: provider_entity_code
+        description: If provider individual - I, else organization - O
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["I", "O"]
+      - name: provider_city
+        description: Provider city
+      - name: provider_zip
+        description: Provider ZIP code
+      - name: provider_ruca_desc
+        description: Rural-Urban Commuting Area description for the provider location
+      - name: provider_specialty_code
+        description: Provider specialty code
+      - name: provider_medicare_indicator
+        description: Provider Medicare participation indicator
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Y", "N"]
+
+  - name: dim_state_country
+    description: One record per provider state, FIPS code, and country combination
+    columns:
+      - name: provider_state
+        description: Provider state abbreviation
+        data_tests:
+          - not_null
+      - name: provider_state_fips_code
+        description: FIPS code for the provider state
+      - name: provider_country
+        description: Provider country
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - provider_state
+              - provider_state_fips_code
+              - provider_country
+
+  - name: fct_drugs_prescribed
+    description: Grain is provider NPI plus drug brand and generic name with prescription utilization measures
+    columns:
+      - name: provider_npi
+        description: National Provider Identifier - 1 of 3 table key fields
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: 
+                to: ref('dim_provider')
+                field: provider_npi
+      - name: drug_id
+        description: Foreign key to dim_drug
+        data_tests:
+          - relationships:
+              arguments: 
+                to: ref('dim_drug')
+                field: drug_id
+      - name: total_claims
+        description: Total number of claims
+      - name: total_30_day_fills
+        description: Total 30-day fill equivalents
+      - name: total_day_supply
+        description: Total number of days supplied
+      - name: total_drug_cost
+        description: Total drug cost
+      - name: total_beneficiaries
+        description: Total number of beneficiaries
+      - name: age_65_plus_suppression_flag
+        description: Suppression flag for age 65 and older measures
+      - name: total_age_65_plus_claims
+        description: Total claims for beneficiaries age 65 and older
+      - name: total_age_65_plus_30_day_fills
+        description: Total 30-day fill equivalents for beneficiaries age 65 and older
+      - name: total_age_65_plus_drug_cost
+        description: Total drug cost for beneficiaries age 65 and older
+      - name: total_age_65_plus_day_supply
+        description: Total day supply for beneficiaries age 65 and older
+      - name: age_65_plus_beneficiary_suppression_flag
+        description: Suppression flag for age 65 and older beneficiary counts
+      - name: total_age_65_plus_beneficiaries
+        description: Total beneficiaries age 65 and older
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - provider_npi
+              - drug_id
+          
+  - name: fct_services_rendered
+    description: Grain is provider NPI plus HCPCS code and place of service with service utilization and payment measures
+    columns:
+      - name: provider_npi
+        description: National Provider Identifier - 1 of 3 table key fields
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: 
+                to: ref('dim_provider')
+                field: provider_npi
+      - name: hcpcs_code
+        description: Identifies medical service provided. 2 of 3 table key fields
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: 
+                to: ref('dim_service')
+                field: hcpcs_code
+      - name: place_of_service
+        description: Identifies place of service, either facility (F) or non-facility (O). 3 of 3 table key fields. Degenerate dimension
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["F", "O"]
+      - name: total_beneficiaries
+        description: Total number of beneficiaries
+      - name: total_services
+        description: Total number of services rendered
+      - name: total_beneficiaries_per_day_services
+        description: Average daily services per beneficiary
+      - name: avg_submitted_charge
+        description: Average submitted charge amount
+      - name: avg_medicare_allowed_amount
+        description: Average Medicare allowed amount
+      - name: avg_medicare_payment_amount
+        description: Average Medicare payment amount
+      - name: avg_medicare_standardized_amount
+        description: Average Medicare standardized amount
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - provider_npi
+              - hcpcs_code
+              - place_of_service

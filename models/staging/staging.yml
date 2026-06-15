@@ -1,3 +1,5 @@
+version: 2
+
 models:
   - name: stg_provider_service
     description: Grain is Provider + service + place of service
