@@ -10,3 +10,4 @@ select
     avg_medicare_payment_amount,
     avg_medicare_standardized_amount
 from {{ ref('stg_provider_service') }}
+WHERE provider_npi IN (SELECT provider_npi FROM dim_provider)

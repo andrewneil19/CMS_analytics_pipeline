@@ -14,3 +14,4 @@ select
     age_65_plus_beneficiary_suppression_flag,
     total_age_65_plus_beneficiaries
 from {{ ref('stg_provider_drug') }}
+WHERE provider_npi IN (SELECT provider_npi FROM dim_provider)
