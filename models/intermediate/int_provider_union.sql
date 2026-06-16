@@ -13,6 +13,9 @@ with provider_with_service as (
         provider_zip,
         provider_ruca,
         provider_ruca_desc,
+        provider_state,
+        provider_state_fips_code,
+        provider_country,
         provider_specialty_code,
         null as provider_specialty_code_source,
         provider_medicare_indicator
@@ -34,9 +37,12 @@ provider_with_drug as (
         null as provider_zip,
         null as provider_ruca,
         null as provider_ruca_desc,
+        provider_state,
+        provider_state_fips_code,
+        null as provider_country,
         provider_specialty_code,
         provider_specialty_code_source,
-        null as provider_medicare_indicator --this is something to circle back to. there are indeed some providers with N for this column - why would they be in this dataset, and do i want to keep them?
+        null as provider_medicare_indicator
     from {{ ref('stg_provider_drug') }}    
 ),
 
