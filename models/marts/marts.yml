@@ -57,6 +57,7 @@ models:
         description: Provider ZIP code
       - name: provider_ruca_desc
         description: Rural-Urban Commuting Area description for the provider location
+      - name: provider_state
       - name: provider_specialty_code
         description: Provider specialty code
       - name: provider_medicare_indicator
@@ -65,25 +66,6 @@ models:
           - accepted_values:
               arguments:
                 values: ["Y", "N"]
-
-  - name: dim_state_country
-    description: One record per provider state, FIPS code, and country combination
-    columns:
-      - name: provider_state
-        description: Provider state abbreviation
-        data_tests:
-          - not_null
-      - name: provider_state_fips_code
-        description: FIPS code for the provider state
-      - name: provider_country
-        description: Provider country
-    data_tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - provider_state
-              - provider_state_fips_code
-              - provider_country
 
   - name: fct_drugs_prescribed
     description: Grain is provider NPI plus drug brand and generic name with prescription utilization measures
