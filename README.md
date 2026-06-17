@@ -1,32 +1,30 @@
 # CMS Medicare Analytics Pipeline
 
-A complete Snowflake → dbt → Power BI analytics pipeline built on real, publicly available CMS Medicare data — ~38 million rows across two datasets, modeled into a dimensional warehouse and surfaced through a Power BI semantic model.
+A complete Snowflake -> dbt -> Power BI analytics pipeline built on real, publicly available CMS (Centers for Medicare and Medicaid) Medicare claims data with ~38 million rows across two datasets, modeled into a dimensional warehouse and surfaced through a Power BI semantic model.
 
-**Stack:** Snowflake → dbt Cloud → Power BI
+**Stack:** Snowflake -> dbt Cloud -> Power BI
 
 ## Why this project
 
-This is real, messy, public-sector data — not a synthetic or pre-cleaned dataset. The goal was to demonstrate the full analytics engineering lifecycle: hand-built Snowflake ingestion, a layered dbt project with tests and documentation, deliberate dimensional modeling decisions, and a BI semantic layer with consistent business definitions.
+These are real, public-sector data, not synthetic or Kaggle. The goal was to demonstrate the full analytics engineering lifecycle: hand-built Snowflake ingestion, a layered dbt project with tests and documentation, deliberate dimensional modeling decisions, and a BI semantic layer with consistent business definitions.
 
-The CMS data itself is just the substrate. The same techniques here — grain verification, conformed dimensions, least-privilege roles, referential integrity testing — apply to any domain.
+The same techniques I used could be applied to any domain besides CMS claims. Some key techniques included: grain verification, conformed dimensions, least-privilege roles, and referential integrity testing.
 
 ## Data
 
-- **Medicare Physician & Other Practitioners by Provider and Service** (~9.8M rows) — provider-level medical claims summary
-- **Medicare Part D Prescribers by Provider and Drug** (~28M rows) — provider-level prescription claims summary
+- **Medicare Physician & Other Practitioners by Provider and Service** (~9.8M rows):  provider-level medical claims summary
+- **Medicare Part D Prescribers by Provider and Drug** (~28M rows): provider-level prescription claims summary
 
 Both are public, PHI-free files from [data.cms.gov](https://data.cms.gov).
 
 ## What this enables
 
-The dimensional model supports questions an analyst could answer directly in Snowflake or by exploring the Power BI semantic model — without writing new SQL each time:
+The dimensional model supports questions an analyst could answer directly in Snowflake or by exploring the Power BI semantic model, without needing to write new SQL each time:
 
 - Which states have the highest Medicare spend per service, or per beneficiary?
 - Which provider specialties drive the most utilization, and how does that differ between facility and non-facility settings?
 - Which drugs account for the largest share of total Part D cost, and how does that shift for beneficiaries 65+?
 - Which providers prescribe at high volume relative to the services they render — and does that pattern cluster by specialty or geography?
-
-None of these required custom SQL once the marts existed — that's the point of building a conformed dimensional model with consistent, documented measures: the hard modeling work happens once, and the questions on top of it become cheap to ask.
 
 ## Architecture
 
@@ -40,28 +38,28 @@ Snowflake (raw)
 Power BI (semantic model, Import mode)
 ```
 
-![dbt lineage DAG](assets/dbt_lineage.png)
+![dbt lineage DAG](assets/CMS Lineage DAG.png)
 
 ## Data model
 
 **Dimensions**
-- `dim_provider` — one row per provider NPI; conformed across both source datasets
-- `dim_service` — one row per HCPCS code
-- `dim_drug` — one row per drug brand/generic name combination, with a surrogate key (`drug_id`)
+- `dim_provider`: one row per provider NPI; conformed across both source datasets
+- `dim_service`: one row per HCPCS code
+- `dim_drug`: one row per drug brand/generic name combination, with a surrogate key (`drug_id`)
 
 **Facts**
-- `fct_services_rendered` — grain: provider × HCPCS code × place of service
-- `fct_drugs_prescribed` — grain: provider × drug
+- `fct_services_rendered`: grain = provider × HCPCS code × place of service
+- `fct_drugs_prescribed`: grain = provider × drug
 
 `place_of_service` is treated as a degenerate dimension (only two values, no separate attributes worth normalizing).
 
-![Power BI semantic model](assets/power_bi_semantic_model.png)
+![Power BI semantic model](assets/CMS Power BI data madel.png)
 
-## Design decisions worth calling out
+## Some key design decisions
 
-- **Grain verification, not assumption.** Table grain was identified from data dictionary clues ("for each X, Y, Z...") and then verified empirically with `GROUP BY` + `HAVING COUNT(*) > 1`. One initial grain assumption (provider × drug generic name) turned out to be wrong — verification caught it before it propagated downstream.
+- **Grain verification, not assumption.** Table grain was identified from data dictionary clues ("for each X, Y, Z...") and then verified empirically with `GROUP BY` + `HAVING COUNT(*) > 1`. One initial grain assumption (provider × drug generic name) turned out to be wrong; verification caught it before it became an issue later.
 - **Conformed provider dimension.** Both source datasets describe providers using different/overlapping columns. An intermediate model unions and deduplicates them via `ROW_NUMBER()`, preferring the more complete source when a provider appears in both.
-- **Surrogate vs. natural keys.** Dimension tables use surrogate keys (`dbt_utils.generate_surrogate_key`) where a composite natural key would be awkward to carry into fact tables (e.g. `dim_drug`). Fact tables themselves rely on natural composite keys — Kimball convention, since fact rows are queried by aggregation, not key lookup.
+- **Surrogate vs. natural keys.** Dimension tables had single-column keys except `dim_drug`, where a surrogate key (`dbt_utils.generate_surrogate_key`) was used when a composite natural key would be awkward to carry into fact tables. Fact tables themselves rely on natural composite keys, which is a Kimball convention: fact rows are queried by aggregation, not key lookup.
 - **Degenerate dimension.** `place_of_service` has only two values and no other attributes, so it stays in the fact table rather than becoming its own dimension.
 - **Least privilege.** dbt connects via a dedicated `transformer` role/`dbt_user`, scoped to `SELECT` on raw and full DML on dev/prod schemas — not the account admin role.
 - **Import mode in Power BI.** The data is a static annual snapshot and the marts are already aggregated, so Import mode was chosen over DirectQuery for report performance and to avoid recurring Snowflake compute costs. In a production environment with regularly-refreshing source data, a single Import-mode model wouldn't be the right default — large fact tables would more typically use DirectQuery or a hybrid/dual storage model (dimensions on Import or dual mode, facts on DirectQuery or incremental refresh) to balance data freshness against query performance. Import made sense specifically because of the static, pre-aggregated nature of this dataset, not as a general recommendation.
