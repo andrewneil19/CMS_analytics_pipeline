@@ -53,7 +53,7 @@ Power BI (semantic model, Import mode)
 
 `place_of_service` is treated as a degenerate dimension (only two values, no separate attributes worth normalizing).
 
-![Power BI semantic model](assets/CMS_Power_BI_data_madel.png)
+![Power BI semantic model](assets/CMS_Power_BI_data_model.png)
 
 ## Some key design decisions
 
