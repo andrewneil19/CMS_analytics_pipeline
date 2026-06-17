@@ -38,7 +38,7 @@ Snowflake (raw)
 Power BI (semantic model, Import mode)
 ```
 
-![dbt lineage DAG](assets/CMS Lineage DAG.png)
+![dbt lineage DAG](assets/CMS_Lineage_DAG.png)
 
 ## Data model
 
@@ -53,7 +53,7 @@ Power BI (semantic model, Import mode)
 
 `place_of_service` is treated as a degenerate dimension (only two values, no separate attributes worth normalizing).
 
-![Power BI semantic model](assets/CMS Power BI data madel.png)
+![Power BI semantic model](assets/CMS_Power_BI_data_madel.png)
 
 ## Some key design decisions
 
