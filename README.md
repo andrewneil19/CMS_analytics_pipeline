@@ -76,11 +76,11 @@ Power BI (semantic model, Import mode)
 
 ## Scope and possible extensions
 
-This project covers transformation and modeling end to end, but ingestion and orchestration were intentionally manual: raw files were loaded by hand via SnowSQL `PUT`/`COPY INTO`, and dbt runs were triggered manually rather than scheduled. That was a deliberate choice to keep the focus on dimensional modeling and dbt craft — but it's worth being upfront about, since it means this isn't a fully automated pipeline as built.
+This project covers transformation and modeling end to end, but ingestion and orchestration were intentionally manual: raw files were loaded by hand via SnowSQL `PUT`/`COPY INTO`, and dbt runs were triggered manually rather than scheduled. That was a deliberate choice to keep the focus on dimensional modeling and dbt craft (but means this isn't a fully automated pipeline as built).
 
 The same architecture generalizes well beyond CMS data:
 
-- **Any regularly-updating insurance claims feed** (commercial, dental, workers' comp) could use this same staging → intermediate → marts structure and the same grain-verification approach. The main changes would be swapping the manual `COPY INTO` load for a scheduled ingestion tool (e.g. Airbyte or Fivetran) and adding an orchestrator (Airflow, dbt Cloud jobs) to trigger runs on each new batch — turning this into a genuinely automated, recurring pipeline rather than a one-time load.
+- **Any regularly-updating insurance claims feed** (commercial, dental, workers' comp) could use this same staging -> intermediate -> marts structure and the same grain-verification approach. The main changes would be swapping the manual `COPY INTO` load for a scheduled ingestion tool (e.g. Airbyte or Fivetran) and adding an orchestrator (Airflow, dbt Cloud jobs) to trigger runs on each new batch — turning this into a genuinely automated, recurring pipeline rather than a one-time load.
 - The dbt models themselves are written so that loading a new year's CMS data would flow through without modification, even without full automation.
 
 ## Repo structure
